@@ -79,7 +79,7 @@ function App() {
 
   return (
     <div className="glass-panel">
-      <img src="/logo.png" alt="Cepro Percussion" className="app-logo" />
+      <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Cepro Percussion" className="app-logo" />
       <p className="subtitle">Input Jadwal Kesenian</p>
 
       {status.message && (
