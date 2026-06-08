@@ -10,6 +10,7 @@ function App() {
   const [formData, setFormData] = useState({
     tanggal: '', kacapi: '', kendang: '', biola: '', perkusi: '',
     sinden: '', narator: '', pic: '', acaraDariSiapa: '',
+    suling: '', keyboard: '', drum: '',
   });
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +45,7 @@ function App() {
       setFormData({
         tanggal: '', kacapi: '', kendang: '', biola: '', perkusi: '',
         sinden: '', narator: '', pic: '', acaraDariSiapa: '',
+        suling: '', keyboard: '', drum: '',
       });
     } catch (error) {
       console.error('Error!', error);
@@ -57,14 +59,11 @@ function App() {
     setIsLoadingList(true);
     setListError('');
     try {
-      // Mengambil data menggunakan GET (tanpa no-cors agar kita bisa baca JSON-nya)
       const response = await fetch(scriptURL);
       if (!response.ok) throw new Error('Gagal mengambil data dari server');
       
       const result = await response.json();
       if (result.status === 'success') {
-        // Balikkan urutan array agar yang terbaru di atas, atau biarkan urut dari atas ke bawah.
-        // Asumsi data Google Sheet urut dari lama ke baru.
         setJadwalList(result.data.reverse());
       } else {
         throw new Error(result.message || 'Format data salah');
@@ -73,6 +72,34 @@ function App() {
       console.error('Error fetching data:', error);
       setListError('Gagal memuat jadwal. Pastikan Anda sudah deploy "New Version" di Google Apps Script.');
     } finally {
+      setIsLoadingList(false);
+    }
+  };
+
+  const handleDelete = async (rowId) => {
+    const confirmDelete = window.confirm("Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak bisa dibatalkan.");
+    if (!confirmDelete) return;
+
+    try {
+      // Kita pakai status loading list sementara
+      setIsLoadingList(true);
+      const formBody = new URLSearchParams();
+      formBody.append('action', 'delete');
+      formBody.append('rowId', rowId);
+
+      await fetch(scriptURL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formBody.toString()
+      });
+
+      alert("Jadwal berhasil dihapus (atau proses hapus sedang berjalan)!");
+      // Reload the data
+      fetchJadwal();
+    } catch (error) {
+      console.error('Error deleting:', error);
+      alert('Gagal menghapus jadwal. Pastikan koneksi internet lancar.');
       setIsLoadingList(false);
     }
   };
@@ -88,7 +115,6 @@ function App() {
     return `${day}/${month}/${year}`;
   };
 
-  // Efek untuk memuat data saat tab berubah ke 'list'
   useEffect(() => {
     if (activeTab === 'list') {
       fetchJadwal();
@@ -166,6 +192,18 @@ function App() {
                   <label>Narator</label>
                   <input type="text" name="narator" value={formData.narator} onChange={handleChange} />
                 </div>
+                <div className="form-group">
+                  <label>Suling</label>
+                  <input type="text" name="suling" value={formData.suling} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label>Keyboard</label>
+                  <input type="text" name="keyboard" value={formData.keyboard} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label>Drum</label>
+                  <input type="text" name="drum" value={formData.drum} onChange={handleChange} />
+                </div>
               </div>
 
               <button type="submit" disabled={isLoading} className="submit-btn">
@@ -215,7 +253,15 @@ function App() {
                         {jadwal.Perkusi && jadwal.Perkusi !== '-' && <span className="player-badge">Perkusi: {jadwal.Perkusi}</span>}
                         {jadwal.Sinden && jadwal.Sinden !== '-' && <span className="player-badge">Sinden: {jadwal.Sinden}</span>}
                         {jadwal.Narator && jadwal.Narator !== '-' && <span className="player-badge">Narator: {jadwal.Narator}</span>}
+                        {jadwal.Suling && jadwal.Suling !== '-' && <span className="player-badge">Suling: {jadwal.Suling}</span>}
+                        {jadwal.Keyboard && jadwal.Keyboard !== '-' && <span className="player-badge">Keyboard: {jadwal.Keyboard}</span>}
+                        {jadwal.Drum && jadwal.Drum !== '-' && <span className="player-badge">Drum: {jadwal.Drum}</span>}
                       </div>
+                    </div>
+                    <div className="card-footer">
+                      <button className="delete-btn" onClick={() => handleDelete(jadwal.rowId)}>
+                        🗑️ Hapus
+                      </button>
                     </div>
                   </div>
                 ))}
