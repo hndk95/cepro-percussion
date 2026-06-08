@@ -77,6 +77,17 @@ function App() {
     }
   };
 
+  // Helper untuk format tanggal menjadi DD/MM/YYYY
+  const formatDate = (dateStr) => {
+    if (!dateStr || dateStr === '-') return '-';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   // Efek untuk memuat data saat tab berubah ke 'list'
   useEffect(() => {
     if (activeTab === 'list') {
@@ -192,7 +203,7 @@ function App() {
                 {jadwalList.map((jadwal, index) => (
                   <div key={index} className="jadwal-card">
                     <div className="card-header">
-                      <span className="card-date">📅 {jadwal.Tanggal || '-'}</span>
+                      <span className="card-date">📅 {formatDate(jadwal.Tanggal)}</span>
                       <span className="card-pic">👤 {jadwal.PIC || '-'}</span>
                     </div>
                     <div className="card-body">
