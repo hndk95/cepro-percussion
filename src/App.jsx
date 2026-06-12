@@ -72,16 +72,30 @@ function App() {
       
       const result = await response.json();
       if (result.status === 'success') {
-        const sortedData = result.data.sort((a, b) => {
-          // Tangani jika ada data kosong atau strip
-          if (!a.Tanggal || a.Tanggal === '-') return 1;
-          if (!b.Tanggal || b.Tanggal === '-') return -1;
-          
-          const dateA = new Date(a.Tanggal);
-          const dateB = new Date(b.Tanggal);
-          return dateA - dateB; // Lama ke baru (Ascending)
-        });
-        setJadwalList(sortedData);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset jam agar perbandingan adil berdasarkan tanggal saja
+
+        const filteredAndSortedData = result.data
+          .filter((jadwal) => {
+            if (!jadwal.Tanggal || jadwal.Tanggal === '-') return true; // Tetap tampilkan jika tidak ada tanggal (agar tidak hilang tanpa jejak)
+            
+            const eventDate = new Date(jadwal.Tanggal);
+            eventDate.setHours(0, 0, 0, 0);
+            
+            // Hanya simpan (tampilkan) jadwal yang tanggalnya hari ini atau di masa depan
+            return eventDate >= today;
+          })
+          .sort((a, b) => {
+            // Tangani jika ada data kosong atau strip
+            if (!a.Tanggal || a.Tanggal === '-') return 1;
+            if (!b.Tanggal || b.Tanggal === '-') return -1;
+            
+            const dateA = new Date(a.Tanggal);
+            const dateB = new Date(b.Tanggal);
+            return dateA - dateB; // Lama ke baru (Ascending)
+          });
+
+        setJadwalList(filteredAndSortedData);
       } else {
         throw new Error(result.message || 'Format data salah');
       }
