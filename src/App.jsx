@@ -64,7 +64,16 @@ function App() {
       
       const result = await response.json();
       if (result.status === 'success') {
-        setJadwalList(result.data.reverse());
+        const sortedData = result.data.sort((a, b) => {
+          // Tangani jika ada data kosong atau strip
+          if (!a.Tanggal || a.Tanggal === '-') return 1;
+          if (!b.Tanggal || b.Tanggal === '-') return -1;
+          
+          const dateA = new Date(a.Tanggal);
+          const dateB = new Date(b.Tanggal);
+          return dateA - dateB; // Lama ke baru (Ascending)
+        });
+        setJadwalList(sortedData);
       } else {
         throw new Error(result.message || 'Format data salah');
       }
