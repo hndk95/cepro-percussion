@@ -245,7 +245,7 @@ function App() {
                       <span className="card-pic">👤 {jadwal.PIC || '-'}</span>
                     </div>
                     <div className="card-body">
-                      <h3 className="card-title">{jadwal['Acara Dari Siapa'] || 'Acara Tanpa Nama'}</h3>
+                      <h3 className="card-title">{(jadwal['Acara Dari Siapa'] && jadwal['Acara Dari Siapa'] !== '-') ? jadwal['Acara Dari Siapa'] : 'Tidak ada nama Acara'}</h3>
                       <div className="players-list">
                         {jadwal.Kacapi && jadwal.Kacapi !== '-' && <span className="player-badge">Kacapi: {jadwal.Kacapi}</span>}
                         {jadwal.Kendang && jadwal.Kendang !== '-' && <span className="player-badge">Kendang: {jadwal.Kendang}</span>}
