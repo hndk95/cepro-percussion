@@ -10,7 +10,7 @@ function App() {
   const [formData, setFormData] = useState({
     tanggal: '', kacapi: '', kendang: '', biola: '', perkusi: '',
     sinden: '', narator: '', pic: '', acaraDariSiapa: '',
-    suling: '', keyboard: '', drum: '',
+    suling: '', keyboard: '', drum: '', pin: ''
   });
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
@@ -49,11 +49,11 @@ function App() {
         body: formBody.toString()
       });
 
-      setStatus({ type: 'success', message: 'Jadwal berhasil disimpan!' });
+      setStatus({ type: 'success', message: 'Permintaan terkirim! Cek Daftar Jadwal, jika PIN salah, jadwal tidak akan tersimpan.' });
       setFormData({
         tanggal: '', kacapi: '', kendang: '', biola: '', perkusi: '',
         sinden: '', narator: '', pic: '', acaraDariSiapa: '',
-        suling: '', keyboard: '', drum: '',
+        suling: '', keyboard: '', drum: '', pin: ''
       });
     } catch (error) {
       console.error('Error!', error);
@@ -108,7 +108,10 @@ function App() {
   };
 
   const handleDelete = async (rowId) => {
-    const confirmDelete = window.confirm("Apakah Anda yakin ingin menghapus jadwal ini? Tindakan ini tidak bisa dibatalkan.");
+    const pin = window.prompt("Masukkan PIN rahasia untuk menghapus jadwal:");
+    if (!pin) return; // Batal jika PIN kosong
+
+    const confirmDelete = window.confirm("Apakah Anda yakin ingin menghapus jadwal ini?");
     if (!confirmDelete) return;
 
     try {
@@ -117,6 +120,7 @@ function App() {
       const formBody = new URLSearchParams();
       formBody.append('action', 'delete');
       formBody.append('rowId', rowId);
+      formBody.append('pin', pin); // Kirim PIN ke server
 
       await fetch(scriptURL, {
         method: 'POST',
@@ -125,7 +129,7 @@ function App() {
         body: formBody.toString()
       });
 
-      alert("Jadwal berhasil dihapus (atau proses hapus sedang berjalan)!");
+      alert("Permintaan hapus terkirim! Jika PIN Anda benar, jadwal akan hilang dari daftar.");
       // Reload the data
       fetchJadwal();
     } catch (error) {
@@ -256,6 +260,11 @@ function App() {
                   <label>Drum</label>
                   <input type="text" name="drum" value={formData.drum} onChange={handleChange} />
                 </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+                <label style={{ color: '#fca5a5' }}>PIN Rahasia *</label>
+                <input type="password" name="pin" placeholder="Masukkan PIN untuk menyimpan" value={formData.pin} onChange={handleChange} required />
               </div>
 
               <button type="submit" disabled={isLoading} className="submit-btn">
