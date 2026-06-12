@@ -124,6 +124,27 @@ function App() {
     return `${day}/${month}/${year}`;
   };
 
+  // Grouping data jadwal berdasarkan bulan
+  const groupedJadwal = jadwalList.reduce((acc, jadwal) => {
+    const dateStr = jadwal.Tanggal;
+    if (!dateStr || dateStr === '-') {
+      if (!acc['Belum Ada Tanggal']) acc['Belum Ada Tanggal'] = [];
+      acc['Belum Ada Tanggal'].push(jadwal);
+      return acc;
+    }
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) {
+      if (!acc['Belum Ada Tanggal']) acc['Belum Ada Tanggal'] = [];
+      acc['Belum Ada Tanggal'].push(jadwal);
+      return acc;
+    }
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const monthYear = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    if (!acc[monthYear]) acc[monthYear] = [];
+    acc[monthYear].push(jadwal);
+    return acc;
+  }, {});
+
   useEffect(() => {
     if (activeTab === 'list') {
       fetchJadwal();
@@ -247,35 +268,42 @@ function App() {
                   <p className="empty-state">Belum ada jadwal yang tersimpan.</p>
                 )}
                 
-                {jadwalList.map((jadwal, index) => (
-                  <div key={index} className="jadwal-card">
-                    <div className="card-header">
-                      <span className="card-date">📅 {formatDate(jadwal.Tanggal)}</span>
-                      <span className="card-pic">👤 {jadwal.PIC || '-'}</span>
-                    </div>
-                    <div className="card-body">
-                      <h3 className="card-title">
-                        {(() => {
-                          const acara = jadwal['Acara Dari Siapa'] || jadwal['Acara dari Siapa'];
-                          return (acara && acara !== '-') ? acara : 'Tidak ada nama Acara';
-                        })()}
-                      </h3>
-                      <div className="players-list">
-                        {jadwal.Kacapi && jadwal.Kacapi !== '-' && <span className="player-badge">Kacapi: {jadwal.Kacapi}</span>}
-                        {jadwal.Kendang && jadwal.Kendang !== '-' && <span className="player-badge">Kendang: {jadwal.Kendang}</span>}
-                        {jadwal.Biola && jadwal.Biola !== '-' && <span className="player-badge">Biola: {jadwal.Biola}</span>}
-                        {jadwal.Perkusi && jadwal.Perkusi !== '-' && <span className="player-badge">Perkusi: {jadwal.Perkusi}</span>}
-                        {jadwal.Sinden && jadwal.Sinden !== '-' && <span className="player-badge">Sinden: {jadwal.Sinden}</span>}
-                        {jadwal.Narator && jadwal.Narator !== '-' && <span className="player-badge">Narator: {jadwal.Narator}</span>}
-                        {jadwal.Suling && jadwal.Suling !== '-' && <span className="player-badge">Suling: {jadwal.Suling}</span>}
-                        {jadwal.Keyboard && jadwal.Keyboard !== '-' && <span className="player-badge">Keyboard: {jadwal.Keyboard}</span>}
-                        {jadwal.Drum && jadwal.Drum !== '-' && <span className="player-badge">Drum: {jadwal.Drum}</span>}
-                      </div>
-                    </div>
-                    <div className="card-footer">
-                      <button className="delete-btn" onClick={() => handleDelete(jadwal.rowId)}>
-                        🗑️ Hapus
-                      </button>
+                {Object.keys(groupedJadwal).map((monthYear) => (
+                  <div key={monthYear} className="month-group">
+                    <h2 className="month-header">🗓️ {monthYear}</h2>
+                    <div className="month-cards">
+                      {groupedJadwal[monthYear].map((jadwal, index) => (
+                        <div key={index} className="jadwal-card">
+                          <div className="card-header">
+                            <span className="card-date">📅 {formatDate(jadwal.Tanggal)}</span>
+                            <span className="card-pic">👤 {jadwal.PIC || '-'}</span>
+                          </div>
+                          <div className="card-body">
+                            <h3 className="card-title">
+                              {(() => {
+                                const acara = jadwal['Acara Dari Siapa'] || jadwal['Acara dari Siapa'];
+                                return (acara && acara !== '-') ? acara : 'Tidak ada nama Acara';
+                              })()}
+                            </h3>
+                            <div className="players-list">
+                              {jadwal.Kacapi && jadwal.Kacapi !== '-' && <span className="player-badge">Kacapi: {jadwal.Kacapi}</span>}
+                              {jadwal.Kendang && jadwal.Kendang !== '-' && <span className="player-badge">Kendang: {jadwal.Kendang}</span>}
+                              {jadwal.Biola && jadwal.Biola !== '-' && <span className="player-badge">Biola: {jadwal.Biola}</span>}
+                              {jadwal.Perkusi && jadwal.Perkusi !== '-' && <span className="player-badge">Perkusi: {jadwal.Perkusi}</span>}
+                              {jadwal.Sinden && jadwal.Sinden !== '-' && <span className="player-badge">Sinden: {jadwal.Sinden}</span>}
+                              {jadwal.Narator && jadwal.Narator !== '-' && <span className="player-badge">Narator: {jadwal.Narator}</span>}
+                              {jadwal.Suling && jadwal.Suling !== '-' && <span className="player-badge">Suling: {jadwal.Suling}</span>}
+                              {jadwal.Keyboard && jadwal.Keyboard !== '-' && <span className="player-badge">Keyboard: {jadwal.Keyboard}</span>}
+                              {jadwal.Drum && jadwal.Drum !== '-' && <span className="player-badge">Drum: {jadwal.Drum}</span>}
+                            </div>
+                          </div>
+                          <div className="card-footer">
+                            <button className="delete-btn" onClick={() => handleDelete(jadwal.rowId)}>
+                              🗑️ Hapus
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
