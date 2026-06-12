@@ -19,6 +19,14 @@ function App() {
   const [jadwalList, setJadwalList] = useState([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [listError, setListError] = useState('');
+  const [collapsedMonths, setCollapsedMonths] = useState({});
+
+  const toggleMonth = (month) => {
+    setCollapsedMonths(prev => ({
+      ...prev,
+      [month]: !prev[month]
+    }));
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -268,12 +276,19 @@ function App() {
                   <p className="empty-state">Belum ada jadwal yang tersimpan.</p>
                 )}
                 
-                {Object.keys(groupedJadwal).map((monthYear) => (
-                  <div key={monthYear} className="month-group">
-                    <h2 className="month-header">🗓️ {monthYear}</h2>
-                    <div className="month-cards">
-                      {groupedJadwal[monthYear].map((jadwal, index) => (
-                        <div key={index} className="jadwal-card">
+                {Object.keys(groupedJadwal).map((monthYear) => {
+                  const isCollapsed = collapsedMonths[monthYear];
+                  return (
+                    <div key={monthYear} className="month-group">
+                      <div className="month-header" onClick={() => toggleMonth(monthYear)}>
+                        <span>🗓️ {monthYear} <span className="count-badge">({groupedJadwal[monthYear].length})</span></span>
+                        <span className="toggle-icon">{isCollapsed ? '▼' : '▲'}</span>
+                      </div>
+                      
+                      {!isCollapsed && (
+                        <div className="month-cards fade-in">
+                          {groupedJadwal[monthYear].map((jadwal, index) => (
+                            <div key={index} className="jadwal-card">
                           <div className="card-header">
                             <span className="card-date">📅 {formatDate(jadwal.Tanggal)}</span>
                             <span className="card-pic">👤 {jadwal.PIC || '-'}</span>
