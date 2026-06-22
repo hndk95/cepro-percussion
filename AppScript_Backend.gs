@@ -28,13 +28,8 @@ const SECRET_PIN     = 'PIN_RAHASIA_ANDA'; // Ganti dengan PIN yang diinginkan
 // Tanggal | Acara Dari Siapa | PIC | Kacapi | Kendang | Biola | Perkusi |
 // Sinden | Narator | Suling | Keyboard | Drum
 
-// ── CORS HEADERS ────────────────────────────────────────────────────────────
-function setCORSHeaders(output) {
-  return output
-    .setHeader('Access-Control-Allow-Origin', '*')
-    .setHeader('Access-Control-Allow-Methods', 'GET, POST')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
-}
+// Catatan: CORS ditangani otomatis oleh Google ketika deployment
+// di-set ke "Who has access: Anyone". Tidak perlu setHeader manual.
 
 // ── HANDLE GET (mengambil semua data jadwal) ─────────────────────────────────
 function doGet(e) {
@@ -44,10 +39,9 @@ function doGet(e) {
     const data  = sheet.getDataRange().getValues();
 
     if (data.length < 2) {
-      const output = ContentService
+      return ContentService
         .createTextOutput(JSON.stringify({ status: 'success', data: [] }))
         .setMimeType(ContentService.MimeType.JSON);
-      return setCORSHeaders(output);
     }
 
     const headers = data[0]; // Baris pertama = header
@@ -71,16 +65,14 @@ function doGet(e) {
       })
       .filter(Boolean); // Hapus baris null
 
-    const output = ContentService
+    return ContentService
       .createTextOutput(JSON.stringify({ status: 'success', data: jadwalList }))
       .setMimeType(ContentService.MimeType.JSON);
-    return setCORSHeaders(output);
 
   } catch (err) {
-    const output = ContentService
+    return ContentService
       .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
-    return setCORSHeaders(output);
   }
 }
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 const scriptURL = 'https://script.google.com/macros/s/AKfycbxuWStxPqWxilrTes35ztZ12tvvh4U810tVpkN77kROIja7fbxShIiltaJCBYDSarY/exec';
 
+
 const EMPTY_FORM = {
   tanggal: '', kacapi: '', kendang: '', biola: '', perkusi: '',
   sinden: '', narator: '', pic: '', acaraDariSiapa: '',
@@ -25,9 +26,9 @@ function PinModal({ isOpen, mode, onConfirm, onCancel }) {
   }, [isOpen]);
 
   const modeConfig = {
-    add:    { icon: '➕', title: 'Konfirmasi Tambah',  color: '#10b981', label: 'Masukkan PIN untuk menyimpan jadwal' },
-    edit:   { icon: '✏️', title: 'Konfirmasi Edit',    color: '#3b82f6', label: 'Masukkan PIN untuk mengedit jadwal' },
-    delete: { icon: '🗑️', title: 'Konfirmasi Hapus',  color: '#ef4444', label: 'Masukkan PIN untuk menghapus jadwal' },
+    add: { icon: '➕', title: 'Konfirmasi Tambah', color: '#10b981', label: 'Masukkan PIN untuk menyimpan jadwal' },
+    edit: { icon: '✏️', title: 'Konfirmasi Edit', color: '#3b82f6', label: 'Masukkan PIN untuk mengedit jadwal' },
+    delete: { icon: '🗑️', title: 'Konfirmasi Hapus', color: '#ef4444', label: 'Masukkan PIN untuk menghapus jadwal' },
   };
   const cfg = modeConfig[mode] || modeConfig.edit;
 
@@ -371,7 +372,7 @@ function App() {
   };
 
   // ── Grouping ──────────────────────────────────────────────────────────────
-  const monthNames = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+  const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
   const groupedJadwal = jadwalList.reduce((acc, jadwal) => {
     const d = new Date(jadwal.Tanggal);
     const key = (!jadwal.Tanggal || jadwal.Tanggal === '-' || isNaN(d.getTime()))
@@ -447,9 +448,9 @@ function App() {
 
               <div className="players-grid">
                 {[
-                  ['kacapi','Kacapi'],['kendang','Kendang'],['biola','Biola'],
-                  ['perkusi','Perkusi'],['sinden','Sinden'],['narator','Narator'],
-                  ['suling','Suling'],['keyboard','Keyboard'],['drum','Drum'],
+                  ['kacapi', 'Kacapi'], ['kendang', 'Kendang'], ['biola', 'Biola'],
+                  ['perkusi', 'Perkusi'], ['sinden', 'Sinden'], ['narator', 'Narator'],
+                  ['suling', 'Suling'], ['keyboard', 'Keyboard'], ['drum', 'Drum'],
                 ].map(([name, label]) => (
                   <div className="form-group" key={name}>
                     <label>{label}</label>
