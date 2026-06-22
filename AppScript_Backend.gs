@@ -24,9 +24,8 @@ const SHEET_NAME     = 'Sheet1'; // Ganti jika nama sheet berbeda
 const SECRET_PIN     = 'PIN_RAHASIA_ANDA'; // Ganti dengan PIN yang diinginkan
 
 // ── NAMA KOLOM (sesuaikan dengan header di Google Sheet Anda) ───────────────
-// Pastikan baris pertama sheet adalah header dengan nama persis seperti ini:
-// Tanggal | Acara Dari Siapa | PIC | Kacapi | Kendang | Biola | Perkusi |
-// Sinden | Narator | Suling | Keyboard | Drum
+// Pastikan baris pertama sheet adalah header dengan urutan persis seperti ini:
+// Tanggal | Kacapi | Kendang | Biola | Perkusi | Sinden | Narator | PIC | Acara dari Siapa | Suling | Drum | Keyboard | Tanggal Input
 
 // Catatan: CORS ditangani otomatis oleh Google ketika deployment
 // di-set ke "Who has access: Anyone". Tidak perlu setHeader manual.
@@ -97,18 +96,19 @@ function doPost(e) {
     // ── ACTION: TAMBAH JADWAL BARU ─────────────────────────────────────────
     if (action === 'add') {
       const newRow = [
-        params.tanggal       || '',
+        params.tanggal        || '',
+        params.kacapi         || '',
+        params.kendang        || '',
+        params.biola          || '',
+        params.perkusi        || '',
+        params.sinden         || '',
+        params.narator        || '',
+        params.pic            || '',
         params.acaraDariSiapa || '',
-        params.pic           || '',
-        params.kacapi        || '',
-        params.kendang       || '',
-        params.biola         || '',
-        params.perkusi       || '',
-        params.sinden        || '',
-        params.narator       || '',
-        params.suling        || '',
-        params.keyboard      || '',
-        params.drum          || '',
+        params.suling         || '',
+        params.drum           || '',
+        params.keyboard       || '',
+        new Date() // Kolom Tanggal Input
       ];
       sheet.appendRow(newRow);
       Logger.log(`Jadwal baru ditambahkan: ${params.acaraDariSiapa} - ${params.tanggal}`);
@@ -132,17 +132,17 @@ function doPost(e) {
       // Buat map dari header → nilai baru
       const fieldMap = {
         'Tanggal':          params.tanggal        || '',
-        'Acara Dari Siapa': params.acaraDariSiapa || '',
-        'PIC':              params.pic            || '',
         'Kacapi':           params.kacapi         || '',
         'Kendang':          params.kendang        || '',
         'Biola':            params.biola          || '',
         'Perkusi':          params.perkusi        || '',
         'Sinden':           params.sinden         || '',
         'Narator':          params.narator        || '',
+        'PIC':              params.pic            || '',
+        'Acara dari Siapa': params.acaraDariSiapa || '',
         'Suling':           params.suling         || '',
-        'Keyboard':         params.keyboard       || '',
         'Drum':             params.drum           || '',
+        'Keyboard':         params.keyboard       || ''
       };
 
       // Update setiap kolom yang ada di fieldMap
@@ -197,9 +197,9 @@ function setupSheetHeaders() {
   const sheet = ss.getSheetByName(SHEET_NAME);
 
   const headers = [
-    'Tanggal', 'Acara Dari Siapa', 'PIC',
-    'Kacapi', 'Kendang', 'Biola', 'Perkusi',
-    'Sinden', 'Narator', 'Suling', 'Keyboard', 'Drum'
+    'Tanggal', 'Kacapi', 'Kendang', 'Biola',
+    'Perkusi', 'Sinden', 'Narator', 'PIC',
+    'Acara dari Siapa', 'Suling', 'Drum', 'Keyboard', 'Tanggal Input'
   ];
 
   // Cek apakah baris pertama sudah ada header
@@ -217,4 +217,119 @@ function setupSheetHeaders() {
   sheet.setFrozenRows(1);
 
   Logger.log('Header berhasil dibuat!');
+}
+
+// ── FUNGSI MIGRASI OTOMATIS ──────────────────────────────────────────────────
+function jalankanMigrasiOtomatis() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  // Pastikan nama sheet lama dan baru sesuai dengan yang ada di file Anda
+  const sheetLama = ss.getSheetByName("EVENT CEPRO"); // Ganti jika namanya beda
+  const sheetBaru = ss.getSheetByName("Source Jadwalku"); 
+  
+  // Ambil semua data dari sheet lama (Mulai baris ke-2, mengabaikan header)
+  const dataLama = sheetLama.getRange(2, 1, sheetLama.getLastRow() - 1, 6).getValues();
+  
+  // Siapkan penampung untuk baris-baris data baru
+  const barisBaru = [];
+  const timestamp = new Date();
+  
+  for (let i = 0; i < dataLama.length; i++) {
+    const row = dataLama[i];
+    const tanggal = row[1];
+    const pemusikText = row[2];
+    const ket = row[3];
+    const pic = row[4];
+    
+    // Abaikan jika baris kosong
+    if (!tanggal && !pemusikText) continue;
+    
+    // Filter khusus: Hanya masukkan jadwal mulai Juni 2026
+
+    // Ubah apapun format tanggalnya menjadi teks biasa berskala huruf kecil
+    let textTanggal = String(tanggal).toLowerCase();
+    let isTargetDate = false;
+    
+    // Pastikan itu adalah tahun 2026
+    if (textTanggal.includes("2026")) {
+      // Kita "buang" (abaikan) bulan-bulan sebelum Juni
+      if (!textTanggal.includes("januari") && !textTanggal.includes("jan ") && 
+          !textTanggal.includes("februari") && !textTanggal.includes("feb ") &&
+          !textTanggal.includes("maret") && !textTanggal.includes("mar ") &&
+          !textTanggal.includes("april") && !textTanggal.includes("apr ") &&
+          !textTanggal.includes("mei") && !textTanggal.includes("may ")) {
+        
+        isTargetDate = true;
+      }
+    }
+    
+    if (!isTargetDate) continue; // Lewati jika bukan jadwal yang diinginkan
+    
+    // Objek untuk menyimpan nama pemain sementara
+    let pemain = {
+      kacapi: "-", kendang: "-", biola: "-", perkusi: "-", 
+      sinden: "-", narator: "-", suling: "-", keyboard: "-", drum: "-"
+    };
+    
+    // Proses Auto-Split dari teks pemusik
+    if (pemusikText) {
+      // Pecah berdasarkan garis baru (Enter)
+      const lines = pemusikText.split('\n');
+      
+      lines.forEach(line => {
+        // Pecah berdasarkan titik dua (:)
+        if (line.includes(':')) {
+          let parts = line.split(':');
+          let alatMusik = parts[0].trim().toLowerCase();
+          let namaOrang = parts[1].trim();
+          
+          // Deteksi alat musik dan masukkan ke kolom yang benar
+          if (alatMusik.includes("kacapi")) pemain.kacapi = namaOrang;
+          else if (alatMusik.includes("kendang")) pemain.kendang = namaOrang;
+          else if (alatMusik.includes("biola")) pemain.biola = namaOrang;
+          else if (alatMusik.includes("perkusi")) pemain.perkusi = namaOrang;
+          else if (alatMusik.includes("sinden")) pemain.sinden = namaOrang;
+          else if (alatMusik.includes("narator") || alatMusik.includes("dalang")) pemain.narator = namaOrang;
+          else if (alatMusik.includes("suling")) pemain.suling = namaOrang;
+          else if (alatMusik.includes("keyboard")) pemain.keyboard = namaOrang;
+          else if (alatMusik.includes("drum")) pemain.drum = namaOrang;
+        }
+      });
+    }
+    
+    // Format tanggal jika objek date (DI PERBAIKI UNTUK TIMEZONE)
+    let formattedTanggal = tanggal;
+    if (tanggal instanceof Date) {
+      formattedTanggal = Utilities.formatDate(tanggal, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    }
+    
+    // Susun sesuai urutan kolom Sheet1 kita:
+    // Tanggal, Kacapi, Kendang, Biola, Perkusi, Sinden, Narator, PIC, Acara dari Siapa, Suling, Drum, Keyboard, Tanggal Input
+    barisBaru.push([
+      formattedTanggal || "-",
+      pemain.kacapi,
+      pemain.kendang,
+      pemain.biola,
+      pemain.perkusi,
+      pemain.sinden,
+      pemain.narator,
+      pic || "-",
+      ket || "-",
+      pemain.suling,
+      pemain.drum,
+      pemain.keyboard,
+      timestamp
+    ]);
+  }
+  
+  // Tuliskan semua data sekaligus ke Sheet1 (Mulai baris ke-2)
+  if (barisBaru.length > 0) {
+    // Kita hapus isi Sheet1 (kecuali header) agar tidak numpuk jika dijalankan berulang
+    if (sheetBaru.getLastRow() > 1) {
+      sheetBaru.getRange(2, 1, sheetBaru.getLastRow() - 1, 13).clearContent();
+    }
+    
+    // Masukkan data baru
+    sheetBaru.getRange(2, 1, barisBaru.length, 13).setValues(barisBaru);
+  }
 }

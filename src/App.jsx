@@ -131,7 +131,7 @@ function EditModal({ isOpen, editData, onChange, onSubmit, onCancel, isLoading, 
               <input type="date" name="tanggal" value={editData.tanggal} onChange={onChange} required />
             </div>
             <div className="form-group">
-              <label>Acara Dari Siapa *</label>
+              <label>Acara dari Siapa *</label>
               <input type="text" name="acaraDariSiapa" placeholder="Penyelenggara acara" value={editData.acaraDariSiapa} onChange={onChange} required />
             </div>
             <div className="form-group">
@@ -438,7 +438,7 @@ function App() {
                 <input type="date" name="tanggal" value={formData.tanggal} onChange={handleChange} required />
               </div>
               <div className="form-group">
-                <label>Acara Dari Siapa *</label>
+                <label>Acara dari Siapa *</label>
                 <input type="text" name="acaraDariSiapa" placeholder="Penyelenggara acara" value={formData.acaraDariSiapa} onChange={handleChange} required />
               </div>
               <div className="form-group">
