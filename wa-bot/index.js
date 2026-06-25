@@ -112,6 +112,84 @@ client.on('message', async (msg) => {
             console.error('Error saat cek !jadwalku:', err.message);
             await msg.reply('❌ Terjadi kesalahan saat memproses permintaan.');
         }
+    } else if (text.toLowerCase().startsWith('!cekacara')) {
+        // Format: !cekacara NamaAcara
+        const args = text.split(' ');
+        if (args.length < 2) {
+            await msg.reply('❌ Format salah. Gunakan perintah: *!cekacara NamaAcara*\nContoh: *!cekacara a imat*');
+            return;
+        }
+        
+        const namaAcaraQuery = args.slice(1).join(' ').trim().toLowerCase();
+        await msg.reply(`⏳ Sedang mencari jadwal untuk acara *${namaAcaraQuery.toUpperCase()}*...`);
+        
+        try {
+            const response = await axios.get(SCRIPT_URL);
+            const data = response.data;
+
+            if (data.status !== 'success') {
+                await msg.reply('❌ Maaf, gagal mengambil data dari server.');
+                return;
+            }
+
+            const jadwalList = data.data || [];
+            const today = stripTime(new Date());
+            
+            const jadwalAcara = [];
+            
+            jadwalList.forEach(jadwal => {
+                if (!jadwal.Tanggal || jadwal.Tanggal === '-') return;
+
+                const tglAcara = stripTime(new Date(jadwal.Tanggal));
+                // Hanya ambil jadwal yang belum terlewat
+                if (tglAcara >= today) {
+                    const namaAcara = jadwal['Acara dari Siapa'] || jadwal['Acara Dari Siapa'] || '';
+                    if (namaAcara.toLowerCase().includes(namaAcaraQuery)) {
+                        // Kumpulkan nama-nama pemain yang bertugas
+                        let players = [];
+                        POSITIONS.forEach(pos => {
+                            const p = jadwal[pos];
+                            if (p && p !== '-' && p.trim() !== '') {
+                                players.push(`${pos}: ${p}`);
+                            }
+                        });
+                        
+                        jadwalAcara.push({
+                            tanggal: jadwal.Tanggal,
+                            acara: namaAcara,
+                            players: players.join(', ')
+                        });
+                    }
+                }
+            });
+            
+            if (jadwalAcara.length > 0) {
+                // Sort ascending berdasarkan tanggal
+                jadwalAcara.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
+                
+                let replyMsg = `📊 *Data Acara: ${namaAcaraQuery.toUpperCase()}* 📊\n\n`;
+                // Helper format tanggal
+                const formatDate = (dateStr) => {
+                    const d = new Date(dateStr);
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = d.getFullYear();
+                    return `${day}/${month}/${year}`;
+                };
+
+                jadwalAcara.forEach((item, idx) => {
+                    replyMsg += `${idx + 1}. *${item.acara}*\n   🗓️ Tanggal: ${formatDate(item.tanggal)}\n   👥 Pemain: ${item.players || 'Belum ada'}\n\n`;
+                });
+                
+                await msg.reply(replyMsg);
+            } else {
+                await msg.reply(`Belum ada jadwal acara yang cocok dengan *${namaAcaraQuery.toUpperCase()}* di masa mendatang. 📆`);
+            }
+            
+        } catch (err) {
+            console.error('Error saat cek !cekacara:', err.message);
+            await msg.reply('❌ Terjadi kesalahan saat memproses permintaan.');
+        }
     }
 });
 
