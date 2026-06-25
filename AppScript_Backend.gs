@@ -64,8 +64,27 @@ function doGet(e) {
       })
       .filter(Boolean); // Hapus baris null
 
+    // Coba baca sheet Data Pemain jika ada
+    let pemainList = [];
+    const sheetPemain = ss.getSheetByName("Data Pemain");
+    if (sheetPemain) {
+      const dataPemain = sheetPemain.getDataRange().getValues();
+      if (dataPemain.length > 1) {
+        const headersPemain = dataPemain[0];
+        const rowsPemain = dataPemain.slice(1);
+        pemainList = rowsPemain.map(row => {
+          let obj = {};
+          headersPemain.forEach((h, i) => {
+            // Trim spaces from headers just in case
+            if(h) obj[h.toString().trim()] = row[i];
+          });
+          return obj;
+        }).filter(p => p.Nama && p.Nama !== '');
+      }
+    }
+
     return ContentService
-      .createTextOutput(JSON.stringify({ status: 'success', data: jadwalList }))
+      .createTextOutput(JSON.stringify({ status: 'success', data: jadwalList, pemain: pemainList }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {

@@ -43,10 +43,10 @@ client.on('message', async (msg) => {
             await msg.reply('❌ Format salah. Gunakan perintah: *!jadwalku NamaPemain*\nContoh: *!jadwalku Indra*');
             return;
         }
-        
+
         const namaPemainQuery = args.slice(1).join(' ').trim().toLowerCase();
         await msg.reply(`⏳ Sedang mencari jadwal untuk *${namaPemainQuery.toUpperCase()}*...`);
-        
+
         try {
             const response = await axios.get(SCRIPT_URL);
             const data = response.data;
@@ -58,9 +58,9 @@ client.on('message', async (msg) => {
 
             const jadwalList = data.data || [];
             const today = stripTime(new Date());
-            
+
             const jadwalPemain = [];
-            
+
             jadwalList.forEach(jadwal => {
                 if (!jadwal.Tanggal || jadwal.Tanggal === '-') return;
 
@@ -83,11 +83,11 @@ client.on('message', async (msg) => {
                     });
                 }
             });
-            
+
             if (jadwalPemain.length > 0) {
                 // Sort ascending berdasarkan tanggal
                 jadwalPemain.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
-                
+
                 let replyMsg = `📅 *Jadwal Mendatang untuk ${namaPemainQuery.toUpperCase()}* 📅\n\n`;
                 // Buat Helper untuk memformat tanggal
                 const formatDate = (dateStr) => {
@@ -102,12 +102,12 @@ client.on('message', async (msg) => {
                     replyMsg += `${idx + 1}. *${item.acara}*\n   🗓️ Tanggal: ${formatDate(item.tanggal)}\n   🎸 Posisi: ${item.posisi}\n\n`;
                 });
                 replyMsg += `Semangat dan pastikan tanggalnya sudah dicatat di kalender pribadi kamu ya! 🚀`;
-                
+
                 await msg.reply(replyMsg);
             } else {
                 await msg.reply(`Belum ada jadwal mendatang untuk pemain *${namaPemainQuery.toUpperCase()}*. Santai dulu boss! 🏖️`);
             }
-            
+
         } catch (err) {
             console.error('Error saat cek !jadwalku:', err.message);
             await msg.reply('❌ Terjadi kesalahan saat memproses permintaan.');
@@ -207,7 +207,7 @@ async function runScheduler() {
                     console.error(`❌ Gagal mengirim pesan ke ${namaPemain} (${waNumber}):`, err.message);
                 }
             } else {
-                console.log(`⚠️ Nomor WA untuk pemain "${namaPemain}" tidak ditemukan di Sheet "Data Pemain".`);
+                console.log(`⚠️ Nomor WA untuk pemain "${namaPemain}" tidak ditemukan, Silahkan tambahkan pada bank Data Pemain.`);
             }
         }
 
