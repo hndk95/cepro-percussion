@@ -2,6 +2,10 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const cron = require('node-cron');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+
+const LOG_FILE = path.join(__dirname, 'sent_logs.json');
 
 // URL Web App Google Script Anda
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxuWStxPqWxilrTes35ztZ12tvvh4U810tVpkN77kROIja7fbxShIiltaJCBYDSarY/exec';
@@ -236,8 +240,19 @@ async function runScheduler() {
 
         const today = stripTime(new Date());
 
-        // Penampung pesan per pemain: { "Budi": [ "Pesan 1", "Pesan 2" ] }
+        // Load logs jika file ada
+        let sentLogs = {};
+        if (fs.existsSync(LOG_FILE)) {
+            try {
+                sentLogs = JSON.parse(fs.readFileSync(LOG_FILE, 'utf8'));
+            } catch (err) {
+                console.error('Gagal membaca log, membuat log baru...', err.message);
+            }
+        }
+
+        // Penampung pesan per pemain: { "Budi": [ {pesan: "...", logKey: "..."} ] }
         const notifications = {};
+        let newLogsAdded = false;
 
         jadwalList.forEach(jadwal => {
             if (!jadwal.Tanggal || jadwal.Tanggal === '-') return;
@@ -253,34 +268,47 @@ async function runScheduler() {
                     const namaPemain = jadwal[pos];
                     if (namaPemain && namaPemain !== '-' && namaPemain.trim() !== '') {
                         const namaClean = namaPemain.trim();
+                        
+                        // Buat unique key untuk log: Nama_Tanggal_H-diffDays
+                        const logKey = `${namaClean.toLowerCase()}_${jadwal.Tanggal}_H-${diffDays}`;
 
-                        const pesanJadwal = `*[H-${diffDays}]* Acara *${jadwal['Acara dari Siapa']}* pada tanggal *${jadwal.Tanggal}*.\n📍 *Posisi Anda:* ${pos}`;
+                        // Hanya proses jika belum pernah dikirim
+                        if (!sentLogs[logKey]) {
+                            const acara = jadwal['Acara dari Siapa'] || jadwal['Acara Dari Siapa'] || 'Tidak ada nama Acara';
+                            const pesanJadwal = `*[H-${diffDays}]* Acara *${acara}* pada tanggal *${jadwal.Tanggal}*.\n📍 *Posisi Anda:* ${pos}`;
 
-                        if (!notifications[namaClean]) {
-                            notifications[namaClean] = [];
+                            if (!notifications[namaClean]) {
+                                notifications[namaClean] = [];
+                            }
+                            notifications[namaClean].push({ pesan: pesanJadwal, logKey: logKey });
                         }
-                        notifications[namaClean].push(pesanJadwal);
                     }
                 });
             }
         });
 
         // Kirim notifikasi ke masing-masing pemain
-        for (const [namaPemain, pesanArray] of Object.entries(notifications)) {
+        for (const [namaPemain, dataArray] of Object.entries(notifications)) {
             const namaKey = namaPemain.toLowerCase();
             const waNumber = phoneMap[namaKey];
 
             if (waNumber) {
                 // Gabungkan pesan jika lebih dari 1 jadwal
                 let finalMessage = `Halo *${namaPemain}* 👋,\nIni adalah pengingat otomatis jadwal *CEPRO PERCUSSION*:\n\n`;
-                pesanArray.forEach((pesan, idx) => {
-                    finalMessage += `${idx + 1}. ${pesan}\n\n`;
+                dataArray.forEach((item, idx) => {
+                    finalMessage += `${idx + 1}. ${item.pesan}\n\n`;
                 });
                 finalMessage += `Pastikan persiapan aman! dan Lakukan pengecekan pada grup WA terlebih dahulu. Terima kasih. 🥁`;
 
                 try {
                     await client.sendMessage(waNumber, finalMessage);
                     console.log(`✅ Pesan terkirim ke ${namaPemain} (${waNumber})`);
+                    
+                    // Tandai log berhasil terkirim
+                    dataArray.forEach(item => {
+                        sentLogs[item.logKey] = true;
+                    });
+                    newLogsAdded = true;
                 } catch (err) {
                     console.error(`❌ Gagal mengirim pesan ke ${namaPemain} (${waNumber}):`, err.message);
                 }
@@ -289,7 +317,12 @@ async function runScheduler() {
             }
         }
 
-        console.log('Pengecekan selesai! (Jika tidak ada pesan terkirim, berarti tidak ada jadwal H-30, H-14, atau H-5 hari ini)');
+        // Simpan log ke file jika ada pembaruan
+        if (newLogsAdded) {
+            fs.writeFileSync(LOG_FILE, JSON.stringify(sentLogs, null, 2));
+        }
+
+        console.log('Pengecekan selesai! (Jika tidak ada pesan terkirim, berarti tidak ada jadwal baru atau semua pengingat sudah dikirim hari ini)');
 
     } catch (err) {
         console.error('Terjadi kesalahan saat runScheduler:', err.message);
