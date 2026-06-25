@@ -93,17 +93,8 @@ client.on('message', async (msg) => {
                 jadwalPemain.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
 
                 let replyMsg = `📅 *Jadwal Mendatang untuk ${namaPemainQuery.toUpperCase()}* 📅\n\n`;
-                // Buat Helper untuk memformat tanggal
-                const formatDate = (dateStr) => {
-                    const d = new Date(dateStr);
-                    const day = String(d.getDate()).padStart(2, '0');
-                    const month = String(d.getMonth() + 1).padStart(2, '0');
-                    const year = d.getFullYear();
-                    return `${day}/${month}/${year}`;
-                };
-
                 jadwalPemain.forEach((item, idx) => {
-                    replyMsg += `${idx + 1}. *${item.acara}*\n   🗓️ Tanggal: ${formatDate(item.tanggal)}\n   🎸 Posisi: ${item.posisi}\n\n`;
+                    replyMsg += `${idx + 1}. *${item.acara}*\n   🗓️ Tanggal: ${formatDateIndo(item.tanggal)}\n   🎸 Posisi: ${item.posisi}\n\n`;
                 });
                 replyMsg += `Semangat dan pastikan tanggalnya sudah dicatat di kalender pribadi kamu ya! 🚀`;
 
@@ -172,17 +163,8 @@ client.on('message', async (msg) => {
                 jadwalAcara.sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
                 
                 let replyMsg = `📊 *Data Acara: ${namaAcaraQuery.toUpperCase()}* 📊\n\n`;
-                // Helper format tanggal
-                const formatDate = (dateStr) => {
-                    const d = new Date(dateStr);
-                    const day = String(d.getDate()).padStart(2, '0');
-                    const month = String(d.getMonth() + 1).padStart(2, '0');
-                    const year = d.getFullYear();
-                    return `${day}/${month}/${year}`;
-                };
-
                 jadwalAcara.forEach((item, idx) => {
-                    replyMsg += `${idx + 1}. *${item.acara}*\n   🗓️ Tanggal: ${formatDate(item.tanggal)}\n   👥 Pemain: ${item.players || 'Belum ada'}\n\n`;
+                    replyMsg += `${idx + 1}. *${item.acara}*\n   🗓️ Tanggal: ${formatDateIndo(item.tanggal)}\n   👥 Pemain: ${item.players || 'Belum ada'}\n\n`;
                 });
                 
                 await msg.reply(replyMsg);
@@ -202,6 +184,18 @@ cron.schedule('0 14 * * *', () => {
     console.log('Menjalankan scheduler otomatis pukul 14:00...');
     runScheduler();
 });
+
+// Helper Array Bulan Indonesia
+const MONTHS_INDO = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+// Fungsi untuk memformat tanggal ke format "27 September 2026"
+function formatDateIndo(dateStr) {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const month = MONTHS_INDO[d.getMonth()];
+    const year = d.getFullYear();
+    return `${day} ${month} ${year}`;
+}
 
 // Fungsi untuk menghapus waktu dari objek Date agar selisih hari akurat
 function stripTime(date) {
@@ -275,7 +269,7 @@ async function runScheduler() {
                         // Hanya proses jika belum pernah dikirim
                         if (!sentLogs[logKey]) {
                             const acara = jadwal['Acara dari Siapa'] || jadwal['Acara Dari Siapa'] || 'Tidak ada nama Acara';
-                            const pesanJadwal = `*[H-${diffDays}]* Acara *${acara}* pada tanggal *${jadwal.Tanggal}*.\n📍 *Posisi Anda:* ${pos}`;
+                            const pesanJadwal = `*[H-${diffDays}]* Acara *${acara}* pada tanggal *${formatDateIndo(jadwal.Tanggal)}*.\n📍 *Posisi Anda:* ${pos}`;
 
                             if (!notifications[namaClean]) {
                                 notifications[namaClean] = [];
